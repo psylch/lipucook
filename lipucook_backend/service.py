@@ -4,10 +4,13 @@ from flask_caching import Cache
 import random
 import os
 from flask_cors import CORS
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from werkzeug.exceptions import NotFound
 
 app = Flask(__name__)
 CORS(app)  # 添加这一行来启用 CORS
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+app.config['APPLICATION_ROOT'] = '/api'  # 设置应用程序的根路径为 /api
 
 # 数据库配置
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -162,4 +165,8 @@ def get_comments(recipe_id):
 
 # 应用程序入口点
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=1009, debug=True)
+    from werkzeug.serving import run_simple
+    application = DispatcherMiddleware(NotFound(), {
+        '/api': app
+    })
+    run_simple('0.0.0.0', 1009, application, use_reloader=True, use_debugger=True)
